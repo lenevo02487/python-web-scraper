@@ -71,4 +71,4 @@ automated? **Demo first — on YOUR sample — before you pay anything.**
 - Fiverr gig (from $15): https://www.fiverr.com/lenevo509/build-a-python-web-scraper-or-automation-script-for-you
 - LinkedIn: https://www.linkedin.com/in/abhishek-phukan-a220b9448/
 
-*Built by Abhishek Phukan — Python Automation Developer, Digboi, Assam, India.*
+*Built by Abhishek Phukan — Python Automation Developer.*
