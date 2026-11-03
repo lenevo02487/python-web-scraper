@@ -1,74 +1,60 @@
-# Python Web Scraper — books.toscrape.com Demo
+# Python Web Scraper — Production-Grade Demo
 
-A working web scraper that walks the **entire catalogue** of
-[books.toscrape.com](https://books.toscrape.com/) (a site built specifically
-for scraping practice) and saves every book into one clean CSV file:
-**title, price, star rating and stock availability**.
-
-This is a live, runnable demo of the web-scraping service I sell on Fiverr —
-send me a sample page from your own project and I'll show you a mini demo
-before you pay anything.
+A modular Python scraper that pulls the full book catalogue from
+[books.toscrape.com](https://books.toscrape.com) (a site built for scraping
+practice) into a clean CSV — built the way a client scraper should be:
+retries, politeness, dedupe, typed records and a run report, not a
+20-line script that breaks on the first hiccup.
 
 ## What it does
 
-- Scrapes all **50 catalogue pages — 1,000 books** — following the site's
-  pagination automatically
-- Extracts title, price (GBP), star rating (1–5) and availability per book
-- Writes a clean, ready-to-use `books.csv`
-- Polite by default: custom User-Agent and a small delay between pages
+- Walks catalogue pages via the "next" pager (configurable page cap)
+- Extracts title, price (£), star rating, stock status and detail URL
+  into typed `Book` records
+- Dedupes by detail URL, writes one sorted CSV, and saves run statistics
+  (pages fetched/failed, duplicates skipped, success rate) as JSON
 
-## Files
+## How it's built
 
-| File | What it is |
-|---|---|
-| `books_scraper.py` | Full scraper (requests + BeautifulSoup) → CSV |
-| `quick_demo.py` | Tiny standard-library-only version (no installs) that prints the first 6 books |
-| `requirements.txt` | Dependencies for the full scraper |
-| `books.csv` | Real output from a full run (1,000 rows) |
+| Layer | File | Responsibility |
+|---|---|---|
+| Config | `scraper/config.py` | One frozen dataclass: delays, timeouts, retry policy, user agent |
+| Fetch | `scraper/fetcher.py` | `requests` session + urllib3 `Retry` (429/5xx, exponential backoff), robots.txt check per host, polite delay between requests |
+| Parse | `scraper/parser.py` | Pure functions HTML → `Book` dataclasses (CSS selectors, `lxml` when available) |
+| Store | `scraper/storage.py` | Dedupe + CSV export + `RunStats` success-rate reporting |
+| Entry | `main.py` | CLI wiring + structured logging |
 
-## How to run
+## Run it
 
 ```bash
 pip install -r requirements.txt
-python3 books_scraper.py              # full catalogue -> books.csv
-python3 books_scraper.py --pages 1    # first page only (20 books)
-python3 quick_demo.py                 # no installs needed, prints 6 rows
+python main.py --pages 3 --output books.csv
+python -m unittest discover -s tests
 ```
 
-## Sample output
+## Sample output (real run, 2 pages)
 
-`books.csv` (first rows of a real run):
+```
+2026-11-03 INFO scraper.main: page ok: 20 books (total new=40)
+2026-11-03 INFO scraper.main: done: wrote 40 rows to sample_output.csv | success rate 100.0%
+```
 
 ```csv
-title,price_gbp,rating,availability
-A Light in the Attic,51.77,3,In stock
-Tipping the Velvet,53.74,1,In stock
-Soumission,50.10,1,In stock
-Sharp Objects,47.82,4,In stock
-Sapiens: A Brief History of Humankind,54.23,5,In stock
+title,price_gbp,rating,in_stock,detail_url
+A Light in the Attic,51.77,3,yes,https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
 ```
 
-`quick_demo.py` output:
+`sample_output.csv` and `run_stats.json` in this repo are from that actual run.
 
-```text
-A Light in the Attic | £51.77 | Three stars
-Tipping the Velvet | £53.74 | One stars
-Soumission | £50.10 | One stars
-Sharp Objects | £47.82 | Four stars
-Sapiens: A Brief History of Humankind | £54.23 | Five stars
-The Requiem Red | £22.65 | One stars
-```
+## Notes
 
-## Tech used
+- Respects `robots.txt` and rate-limits itself by default; raise the page
+  cap deliberately, not accidentally.
+- Parser tests run offline against a fixed HTML fixture
+  (`tests/test_parser.py`, 4 tests).
 
-Python 3 · requests · BeautifulSoup 4 · csv (standard library)
+## Want this for your site?
 
-## Hire me
-
-Need data pulled from a website into CSV/Excel, or a repetitive data task
-automated? **Demo first — on YOUR sample — before you pay anything.**
-
-- Fiverr gig (from $15): https://www.fiverr.com/lenevo509/build-a-python-web-scraper-or-automation-script-for-you
-- LinkedIn: https://www.linkedin.com/in/abhishek-phukan-a220b9448/
-
-*Built by Abhishek Phukan — Python Automation Developer.*
+This demo is free to judge. Send me your target website and I'll first
+build a small working demo scrape on *your* sample — you see the output
+before paying anything. — Abhishek
